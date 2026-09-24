@@ -1,12 +1,24 @@
+const DEFAULT_REMOTE_API = 'https://event-management-api-6mpk.onrender.com';
+
 const getApiBase = () => {
+  // 1. If user set a custom URL in localStorage
   const customUrl = localStorage.getItem('custom_api_url');
   if (customUrl && customUrl.trim()) {
     return `${customUrl.trim().replace(/\/+$/, '')}/api`;
   }
+  
+  // 2. If environment variable is set
   if (import.meta.env.VITE_API_BASE_URL && import.meta.env.VITE_API_BASE_URL.trim()) {
     return `${import.meta.env.VITE_API_BASE_URL.trim().replace(/\/+$/, '')}/api`;
   }
-  return '/api';
+
+  // 3. If running on local dev (localhost), use local proxy '/api'
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    return '/api';
+  }
+
+  // 4. Default for production cloud deployment: your live Render backend
+  return `${DEFAULT_REMOTE_API}/api`;
 };
 
 const getAuthHeaders = () => {
@@ -33,7 +45,7 @@ const handleFetch = async (url, options = {}) => {
   } catch (err) {
     if (err.name === 'TypeError' && err.message.toLowerCase().includes('failed to fetch')) {
       throw new Error(
-        'Backend connection failed. If your Render backend was asleep, please wait ~30 seconds for it to wake up, or verify VITE_API_BASE_URL in Vercel environment variables.'
+        'Connecting to Render backend... Render free-tier servers sleep after inactivity and take ~30s to wake up on the first request. Please click Sign In/Register again now!'
       );
     }
     throw err;
