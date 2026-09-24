@@ -117,13 +117,17 @@ export const seedDatabase = async () => {
 
     const createdEvents = await Event.insertMany(eventsData);
 
-    // 3. Create Sample Registrations
+    // 3. Create Sample Registrations with required attendee fields
     await Registration.create({
       user: attendee._id,
       event: createdEvents[0]._id,
       ticketCode: 'EVT-SUMMIT-2026-X9A',
       attendeeName: attendee.name,
       attendeeEmail: attendee.email,
+      phone: '+91 98765 43210',
+      organization: 'Coimbatore Institute of Technology',
+      designation: 'Software Engineer',
+      specialRequests: 'None',
       status: 'confirmed',
     });
     createdEvents[0].registeredCount = 1;
@@ -135,6 +139,10 @@ export const seedDatabase = async () => {
       ticketCode: 'EVT-SUMMIT-2026-K4B',
       attendeeName: attendee2.name,
       attendeeEmail: attendee2.email,
+      phone: '+91 91234 56789',
+      organization: 'KGiSL Skillrty',
+      designation: 'UI/UX Designer',
+      specialRequests: 'Vegetarian',
       status: 'confirmed',
     });
     createdEvents[0].registeredCount = 2;
@@ -146,12 +154,16 @@ export const seedDatabase = async () => {
       ticketCode: 'EVT-REACT-2026-P2Z',
       attendeeName: attendee.name,
       attendeeEmail: attendee.email,
+      phone: '+91 98765 43210',
+      organization: 'Coimbatore Institute of Technology',
+      designation: 'Software Engineer',
+      specialRequests: 'None',
       status: 'confirmed',
     });
     createdEvents[1].registeredCount = 1;
     await createdEvents[1].save();
 
-    console.log('[Seed] Database successfully seeded with demo users and events!');
+    console.log('[Seed] Database successfully seeded with demo users, events and registrations!');
   } catch (error) {
     console.error('[Seed Error]', error);
   }
