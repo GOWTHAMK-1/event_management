@@ -1,0 +1,13 @@
+{
+  "name": "event-management-platform-root",
+  "version": "1.0.0",
+  "description": "Full Stack MERN Event Management Platform",
+  "scripts": {
+    "server": "npm --prefix server start",
+    "client": "npm --prefix client dev",
+    "start": "npm run server"
+  },
+  "keywords": ["mern", "react", "express", "mongodb", "events", "jwt"],
+  "author": "Gowtham K",
+  "license": "ISC"
+}
