@@ -1,6 +1,13 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL 
-  ? `${import.meta.env.VITE_API_BASE_URL.replace(/\/+$/, '')}/api`
-  : '/api';
+const getApiBase = () => {
+  const customUrl = localStorage.getItem('custom_api_url');
+  if (customUrl && customUrl.trim()) {
+    return `${customUrl.trim().replace(/\/+$/, '')}/api`;
+  }
+  if (import.meta.env.VITE_API_BASE_URL && import.meta.env.VITE_API_BASE_URL.trim()) {
+    return `${import.meta.env.VITE_API_BASE_URL.trim().replace(/\/+$/, '')}/api`;
+  }
+  return '/api';
+};
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
@@ -10,37 +17,51 @@ const getAuthHeaders = () => {
   };
 };
 
+const handleFetch = async (url, options = {}) => {
+  try {
+    const res = await fetch(url, options);
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      data = { message: res.statusText || 'Server responded with unexpected format' };
+    }
+    if (!res.ok) {
+      throw new Error(data.message || `Request failed with status ${res.status}`);
+    }
+    return data;
+  } catch (err) {
+    if (err.name === 'TypeError' && err.message.toLowerCase().includes('failed to fetch')) {
+      throw new Error(
+        'Backend connection failed. If your Render backend was asleep, please wait ~30 seconds for it to wake up, or verify VITE_API_BASE_URL in Vercel environment variables.'
+      );
+    }
+    throw err;
+  }
+};
+
 export const api = {
   // Auth API
   async login(email, password) {
-    const res = await fetch(`${API_BASE}/auth/login`, {
+    return handleFetch(`${getApiBase()}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Login failed');
-    return data;
   },
 
   async register(name, email, password, role) {
-    const res = await fetch(`${API_BASE}/auth/register`, {
+    return handleFetch(`${getApiBase()}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, password, role }),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Registration failed');
-    return data;
   },
 
   async getMe() {
-    const res = await fetch(`${API_BASE}/auth/me`, {
+    return handleFetch(`${getApiBase()}/auth/me`, {
       headers: getAuthHeaders(),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to fetch user');
-    return data;
   },
 
   // Events API
@@ -50,97 +71,67 @@ export const api = {
     if (params.category && params.category !== 'All') query.append('category', params.category);
     if (params.status) query.append('status', params.status);
 
-    const res = await fetch(`${API_BASE}/events?${query.toString()}`);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to fetch events');
-    return data;
+    return handleFetch(`${getApiBase()}/events?${query.toString()}`);
   },
 
   async getEventById(id) {
-    const res = await fetch(`${API_BASE}/events/${id}`);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to fetch event');
-    return data;
+    return handleFetch(`${getApiBase()}/events/${id}`);
   },
 
   async createEvent(eventData) {
-    const res = await fetch(`${API_BASE}/events`, {
+    return handleFetch(`${getApiBase()}/events`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(eventData),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to create event');
-    return data;
   },
 
   async updateEvent(id, eventData) {
-    const res = await fetch(`${API_BASE}/events/${id}`, {
+    return handleFetch(`${getApiBase()}/events/${id}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(eventData),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to update event');
-    return data;
   },
 
   async deleteEvent(id) {
-    const res = await fetch(`${API_BASE}/events/${id}`, {
+    return handleFetch(`${getApiBase()}/events/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to delete event');
-    return data;
   },
 
   async getMyCreatedEvents() {
-    const res = await fetch(`${API_BASE}/events/my/created`, {
+    return handleFetch(`${getApiBase()}/events/my/created`, {
       headers: getAuthHeaders(),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to fetch created events');
-    return data;
   },
 
   // Registrations API
   async registerForEvent(eventId, payload = {}) {
-    const res = await fetch(`${API_BASE}/registrations/${eventId}`, {
+    return handleFetch(`${getApiBase()}/registrations/${eventId}`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(payload),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Registration failed');
-    return data;
   },
 
   async getMyRegistrations() {
-    const res = await fetch(`${API_BASE}/registrations/my`, {
+    return handleFetch(`${getApiBase()}/registrations/my`, {
       headers: getAuthHeaders(),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to fetch registrations');
-    return data;
   },
 
   async cancelRegistration(id) {
-    const res = await fetch(`${API_BASE}/registrations/${id}`, {
+    return handleFetch(`${getApiBase()}/registrations/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to cancel registration');
-    return data;
   },
 
   async getEventAttendees(eventId) {
-    const res = await fetch(`${API_BASE}/registrations/event/${eventId}/attendees`, {
+    return handleFetch(`${getApiBase()}/registrations/event/${eventId}/attendees`, {
       headers: getAuthHeaders(),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Failed to fetch attendees');
-    return data;
   },
 };
