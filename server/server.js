@@ -19,7 +19,11 @@ connectDB().then(async () => {
 });
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 app.use(express.json());
 
 // API Routes
@@ -31,8 +35,16 @@ app.use('/api/registrations', registrationRoutes);
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'online',
-    message: 'Event Management Platform REST API is running smoothly',
+    message: 'Event Management Platform REST API is running smoothly on Render',
     timestamp: new Date().toISOString(),
+  });
+});
+
+app.get('/', (req, res) => {
+  res.json({
+    message: 'EventHub REST API Service',
+    healthCheck: '/api/health',
+    endpoints: ['/api/auth', '/api/events', '/api/registrations'],
   });
 });
 
